@@ -46,10 +46,21 @@ M.setup = function(opts)
 		end
 	end, { desc = "Dismiss AI Suggestion" })
 
-	-- Auto-clear logic
+	-- Auto-clear on cursor move in normal mode or before a character is inserted
 	vim.api.nvim_create_autocmd({ "CursorMoved", "InsertCharPre" }, {
+		group = group,
 		callback = function()
 			ui.clear()
+		end,
+	})
+
+	-- Full cleanup when leaving insert mode
+	vim.api.nvim_create_autocmd("InsertLeave", {
+		group = group,
+		callback = function()
+			ui.clear()
+			api.cancel()
+			timer:stop()
 		end,
 	})
 end
