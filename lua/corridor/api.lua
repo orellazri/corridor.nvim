@@ -2,22 +2,14 @@ local config = require("corridor.config")
 
 local M = {}
 
--- Monotonically increasing ID to track the latest request
+-- Monotonically increasing ID to track the latest request.
+-- We don't kill in-flight jobs because plenary's curl doesn't support clean
+-- cancellation (shutdown() causes "cannot resume dead coroutine" errors).
+-- Instead, stale responses are silently discarded via request_id comparison.
 local current_request_id = 0
-
--- Reference to the currently in-flight plenary job so we can kill it
-local current_job = nil
 
 M.cancel = function()
 	current_request_id = current_request_id + 1
-	if current_job then
-		-- pcall because plenary's curl raises an error when a job is killed
-		-- mid-flight (exit_code=nil triggers error() in its on_exit handler)
-		pcall(function()
-			current_job:shutdown()
-		end)
-		current_job = nil
-	end
 end
 
 M.fetch_suggestion = function(context, callback)
@@ -43,7 +35,7 @@ M.fetch_suggestion = function(context, callback)
 
 	local user_prompt = string.format("PREFIX:\n%s\n\nSUFFIX:\n%s", context.prefix, context.suffix)
 
-	current_job = curl.post(config.get("endpoint"), {
+	curl.post(config.get("endpoint"), {
 		headers = { ["Content-Type"] = "application/json" },
 		body = vim.fn.json_encode({
 			model = config.get("model"),
@@ -88,7 +80,6 @@ M.fetch_suggestion = function(context, callback)
 					return
 				end
 
-				current_job = nil
 				callback(result)
 			end)
 		end,
