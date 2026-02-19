@@ -11,7 +11,11 @@ local current_job = nil
 M.cancel = function()
 	current_request_id = current_request_id + 1
 	if current_job then
-		current_job:shutdown()
+		-- pcall because plenary's curl raises an error when a job is killed
+		-- mid-flight (exit_code=nil triggers error() in its on_exit handler)
+		pcall(function()
+			current_job:shutdown()
+		end)
 		current_job = nil
 	end
 end
