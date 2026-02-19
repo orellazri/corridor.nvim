@@ -2,6 +2,8 @@
 
 AI-powered inline code completion for Neovim. Shows ghost-text suggestions as you type using Fill-in-the-Middle (FIM) completions from local or remote AI models.
 
+![demonstration of corridor](assets/demo.gif)
+
 ## Features
 
 - Ghost text suggestions rendered inline as you type
