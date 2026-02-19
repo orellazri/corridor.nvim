@@ -10,7 +10,7 @@ M.setup = function()
 	local group = vim.api.nvim_create_augroup("CorridorAutoSuggest", { clear = true })
 
 	-- Trigger whenever text is changed in Insert Mode
-	vim.api.nvim_create_autocmd({ "TextChangedI", "InsertEnter" }, {
+	vim.api.nvim_create_autocmd({ "CursorMovedI" }, {
 		group = group,
 		callback = function()
 			M.handle_typing()
