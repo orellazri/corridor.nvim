@@ -27,7 +27,7 @@ local defaults = {
 		middle = "<|fim_middle|>",
 	},
 
-	-- Stop sequences: nil = auto (uses fim.prefix as stop + <|endoftext|>)
+	-- Stop sequences: nil = auto (derived from FIM tokens + common stops)
 	stop = nil,
 }
 
@@ -35,23 +35,37 @@ M.values = vim.deepcopy(defaults)
 
 M.setup = function(opts)
 	M.values = vim.tbl_deep_extend("force", vim.deepcopy(defaults), opts or {})
+	M._normalize_exclude_filetypes()
+	M._derive_stop_sequences()
+end
 
-	-- Normalize exclude_filetypes: accept a list {"md", "help"} or map {md = true}
-	-- and always store as a map for O(1) lookup
+--- Normalize exclude_filetypes: accept a list {"md", "help"} or map {md = true}
+--- and always store as a map for O(1) lookup.
+M._normalize_exclude_filetypes = function()
 	local raw = M.values.exclude_filetypes
-	if raw then
-		local normalized = {}
-		for k, v in pairs(raw) do
-			if type(k) == "number" then
-				-- List-style: {"markdown", "help"}
-				normalized[v] = true
-			else
-				-- Map-style: {markdown = true}
-				normalized[k] = v
-			end
-		end
-		M.values.exclude_filetypes = normalized
+	if not raw then
+		return
 	end
+
+	local normalized = {}
+	for k, v in pairs(raw) do
+		if type(k) == "number" then
+			normalized[v] = true
+		else
+			normalized[k] = v
+		end
+	end
+	M.values.exclude_filetypes = normalized
+end
+
+--- Auto-derive stop sequences from FIM tokens when not explicitly configured.
+M._derive_stop_sequences = function()
+	if M.values.stop then
+		return
+	end
+
+	local fim = M.values.fim
+	M.values.stop = { fim.prefix, fim.suffix, fim.middle, "<|endoftext|>", "\n\n" }
 end
 
 M.get = function(key)
