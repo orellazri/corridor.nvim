@@ -86,6 +86,11 @@ M.handle_typing = function()
 		return
 	end
 
+	-- Skip non-normal buffers (prompt, nofile, terminal, quickfix, help, etc.)
+	if vim.bo.buftype ~= "" then
+		return
+	end
+
 	-- Skip excluded filetypes
 	local excluded = config.get("exclude_filetypes")
 	if excluded[vim.bo.filetype] then
