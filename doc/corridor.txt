@@ -1,0 +1,248 @@
+*corridor.txt*  AI-powered inline code completion for Neovim
+
+Author: Orel Lazri
+License: MIT
+
+==============================================================================
+CONTENTS                                                    *corridor-contents*
+
+  1. Introduction ............................................. |corridor|
+  2. Requirements ...................................... |corridor-requirements|
+  3. Installation ...................................... |corridor-installation|
+  4. Configuration .................................... |corridor-configuration|
+  5. Usage .................................................. |corridor-usage|
+  6. Providers .......................................... |corridor-providers|
+  7. FIM Presets ........................................ |corridor-fim-presets|
+  8. Commands .......................................... |corridor-commands|
+
+==============================================================================
+1. INTRODUCTION                                                     *corridor*
+
+corridor.nvim is an AI-powered inline code completion plugin for Neovim. It
+displays ghost-text suggestions as you type in insert mode, using
+Fill-in-the-Middle (FIM) completions from local or remote AI models.
+
+Features:
+- Ghost text suggestions rendered inline as you type
+- FIM completions using both prefix and suffix context
+- Multiple provider support (LM Studio, Codestral)
+- FIM token presets for popular model families
+- Intelligent debouncing and stale request cancellation
+- Mid-line awareness for single-line truncation
+- Configurable context window with asymmetric 70/30 split
+
+==============================================================================
+2. REQUIREMENTS                                          *corridor-requirements*
+
+- Neovim >= 0.10
+- plenary.nvim (https://github.com/nvim-lua/plenary.nvim)
+
+==============================================================================
+3. INSTALLATION                                          *corridor-installation*
+
+Using lazy.nvim (https://github.com/folke/lazy.nvim):
+>lua
+  {
+    "orellazri/corridor.nvim",
+    dependencies = { "nvim-lua/plenary.nvim" },
+    config = function()
+      require("corridor").setup()
+    end,
+  }
+<
+
+==============================================================================
+4. CONFIGURATION                                        *corridor-configuration*
+
+Call `require("corridor").setup(opts)` with a table of options. All options
+are optional and have sensible defaults.
+
+                                                        *corridor-config-provider*
+provider ~
+  Type: `string`
+  Default: `"lmstudio"`
+
+  AI backend to use. Supported values: `"lmstudio"` (OpenAI-compatible
+  `/v1/completions` endpoint) or `"codestral"` (Mistral FIM API).
+
+                                                        *corridor-config-endpoint*
+endpoint ~
+  Type: `string`
+  Default: `"http://localhost:1234/v1/completions"`
+
+  API endpoint URL.
+
+                                                        *corridor-config-model*
+model ~
+  Type: `string`
+  Default: `"qwen/qwen3-coder-30b"`
+
+  Model name to request from the provider.
+
+                                                        *corridor-config-api_key*
+api_key ~
+  Type: `string|nil`
+  Default: `nil`
+
+  API key for authenticated endpoints. Falls back to the `CORRIDOR_API_KEY`
+  environment variable if not set.
+
+                                                        *corridor-config-debounce_ms*
+debounce_ms ~
+  Type: `number`
+  Default: `250`
+
+  Debounce delay in milliseconds before sending a completion request.
+
+                                                        *corridor-config-max_tokens*
+max_tokens ~
+  Type: `number`
+  Default: `128`
+
+  Maximum number of tokens in the completion response.
+
+                                                        *corridor-config-temperature*
+temperature ~
+  Type: `number`
+  Default: `0.2`
+
+  Sampling temperature for the model.
+
+                                                        *corridor-config-accept_keymap*
+accept_keymap ~
+  Type: `string`
+  Default: `"<Tab>"`
+
+  Keymap to accept a suggestion in insert mode.
+
+                                                        *corridor-config-dismiss_keymap*
+dismiss_keymap ~
+  Type: `string`
+  Default: `"<S-Tab>"`
+
+  Keymap to dismiss a suggestion in insert mode.
+
+                                                        *corridor-config-exclude_filetypes*
+exclude_filetypes ~
+  Type: `table`
+  Default: `{}`
+
+  Filetypes to exclude from suggestions. Accepts a list (`{"md", "help"}`)
+  or a map (`{md = true, help = true}`).
+
+                                                        *corridor-config-max_context_lines*
+max_context_lines ~
+  Type: `number`
+  Default: `0`
+
+  Number of lines of context to send. `0` sends the full buffer. A positive
+  number limits context with an asymmetric 70/30 split (more lines before
+  the cursor than after).
+
+                                                        *corridor-config-fim*
+fim ~
+  Type: `table`
+  Default: Qwen tokens (`<|fim_prefix|>`, `<|fim_suffix|>`, `<|fim_middle|>`)
+
+  FIM (Fill-in-the-Middle) token table with keys `prefix`, `suffix`, and
+  `middle`. See |corridor-fim-presets| for built-in presets.
+
+                                                        *corridor-config-stop*
+stop ~
+  Type: `table|nil`
+  Default: `nil` (auto-derived)
+
+  Stop sequences for the model. When `nil`, automatically derived from
+  the configured FIM tokens plus common stop tokens.
+
+Full example with defaults: >lua
+  require("corridor").setup({
+    provider = "lmstudio",
+    endpoint = "http://localhost:1234/v1/completions",
+    model = "qwen/qwen3-coder-30b",
+    api_key = nil,
+    debounce_ms = 250,
+    max_tokens = 128,
+    temperature = 0.2,
+    accept_keymap = "<Tab>",
+    dismiss_keymap = "<S-Tab>",
+    exclude_filetypes = {},
+    max_context_lines = 0,
+    fim = {
+      prefix = "<|fim_prefix|>",
+      suffix = "<|fim_suffix|>",
+      middle = "<|fim_middle|>",
+    },
+    stop = nil,
+  })
+<
+
+==============================================================================
+5. USAGE                                                        *corridor-usage*
+
+Once installed and configured, corridor activates automatically in insert
+mode. As you type, it fetches AI completions and displays them as ghost text.
+
+Keymaps (in insert mode):
+
+  `<Tab>`     Accept the current suggestion (configurable).
+  `<S-Tab>`   Dismiss the current suggestion (configurable).
+
+When no suggestion is visible, these keys fall through to their normal
+behavior.
+
+==============================================================================
+6. PROVIDERS                                                *corridor-providers*
+
+LM Studio ~
+                                                        *corridor-provider-lmstudio*
+  Connects to a local LM Studio instance or any OpenAI-compatible
+  completions endpoint. This is the default provider.
+>lua
+  require("corridor").setup({
+    provider = "lmstudio",
+    endpoint = "http://localhost:1234/v1/completions",
+    model = "qwen/qwen3-coder-30b",
+  })
+<
+
+Codestral ~
+                                                        *corridor-provider-codestral*
+  Connects to the Mistral FIM API. Requires an API key.
+>lua
+  require("corridor").setup({
+    provider = "codestral",
+    endpoint = "https://codestral.mistral.ai/v1/fim/completions",
+    model = "codestral-latest",
+    api_key = "your-api-key",
+  })
+<
+
+==============================================================================
+7. FIM PRESETS                                            *corridor-fim-presets*
+
+Built-in FIM token presets are available via
+`require("corridor.config").fim_presets`:
+
+  `starcoder`   `<fim_prefix>`, `<fim_suffix>`, `<fim_middle>`
+  `codellama`   `<PRE>`, `<SUF>`, `<MID>`
+  `deepseek`    `<｜fim▁begin｜>`, `<｜fim▁hole｜>`, `<｜fim▁end｜>`
+  `qwen`        `<|fim_prefix|>`, `<|fim_suffix|>`, `<|fim_middle|>`
+  `codestral`   `<|fim_prefix|>`, `<|fim_suffix|>`, `<|fim_middle|>`
+
+Usage example: >lua
+  local presets = require("corridor.config").fim_presets
+  require("corridor").setup({
+    fim = presets.starcoder,
+  })
+<
+
+==============================================================================
+8. COMMANDS                                                *corridor-commands*
+
+corridor.nvim does not register any user commands or expose any public API
+beyond `require("corridor").setup(opts)`. All behavior is driven by
+autocmds and keymaps registered during setup.
+
+==============================================================================
+ vim:tw=78:ts=8:ft=help:norl:
