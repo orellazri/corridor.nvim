@@ -240,9 +240,21 @@ Usage example: >lua
 ==============================================================================
 8. COMMANDS                                                *corridor-commands*
 
-corridor.nvim does not register any user commands or expose any public API
-beyond `require("corridor").setup(opts)`. All behavior is driven by
-autocmds and keymaps registered during setup.
+`:CorridorEnable`                                          *:CorridorEnable*
+  Enable completions globally. Suggestions will be fetched and displayed
+  as you type in insert mode.
+
+`:CorridorDisable`                                        *:CorridorDisable*
+  Disable completions globally. Any active suggestion is cleared and
+  pending requests are cancelled. Completions remain disabled until
+  `:CorridorEnable` is called.
+
+Completions are enabled by default after `setup()`.
+
+You can also call the functions directly from Lua: >lua
+  require("corridor").enable()
+  require("corridor").disable()
+<
 
 ==============================================================================
  vim:tw=78:ts=8:ft=help:norl:

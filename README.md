@@ -92,6 +92,13 @@ Once installed and configured, corridor activates automatically in insert mode. 
 
 When no suggestion is visible, the keymaps fall through to their normal behavior.
 
+### Commands
+
+- `:CorridorEnable` - Enable completions (enabled by default after setup)
+- `:CorridorDisable` - Disable completions globally (clears active suggestions)
+
+Also available as Lua functions: `require("corridor").enable()` and `require("corridor").disable()`.
+
 ### Providers
 
 **LM Studio** (default) - connects to a local LM Studio instance (or any OpenAI-compatible completions endpoint):

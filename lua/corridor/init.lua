@@ -6,6 +6,7 @@ local context = require("corridor.context")
 local M = {}
 
 local timer = nil
+local enabled = true
 
 M.setup = function(opts)
 	config.setup(opts)
@@ -13,6 +14,7 @@ M.setup = function(opts)
 	M._init_timer()
 	M._register_autocmds()
 	M._register_keymaps()
+	M._register_commands()
 end
 
 --- Initialize (or reinitialize) the debounce timer.
@@ -80,6 +82,10 @@ M._register_keymaps = function()
 end
 
 M.handle_typing = function()
+	if not enabled then
+		return
+	end
+
 	-- Skip excluded filetypes
 	local excluded = config.get("exclude_filetypes")
 	if excluded[vim.bo.filetype] then
@@ -98,6 +104,32 @@ M.handle_typing = function()
 			end
 		end)
 	)
+end
+
+--- Register user commands for enabling/disabling completions.
+M._register_commands = function()
+	vim.api.nvim_create_user_command("CorridorEnable", function()
+		M.enable()
+	end, { desc = "Enable Corridor completions" })
+
+	vim.api.nvim_create_user_command("CorridorDisable", function()
+		M.disable()
+	end, { desc = "Disable Corridor completions" })
+end
+
+--- Enable completions globally.
+M.enable = function()
+	enabled = true
+	vim.notify("Corridor: enabled", vim.log.levels.INFO)
+end
+
+--- Disable completions globally and clear any active suggestion.
+M.disable = function()
+	enabled = false
+	ui.clear()
+	api.cancel()
+	timer:stop()
+	vim.notify("Corridor: disabled", vim.log.levels.INFO)
 end
 
 --- Gather context and fetch a suggestion from the API.
