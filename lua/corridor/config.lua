@@ -1,16 +1,34 @@
 local M = {}
 
+M.fim_presets = {
+	starcoder = { prefix = "<fim_prefix>", suffix = "<fim_suffix>", middle = "<fim_middle>" },
+	codellama = { prefix = "<PRE>", suffix = "<SUF>", middle = "<MID>" },
+	deepseek = { prefix = "<｜fim▁begin｜>", suffix = "<｜fim▁hole｜>", middle = "<｜fim▁end｜>" },
+	qwen = { prefix = "<|fim_prefix|>", suffix = "<|fim_suffix|>", middle = "<|fim_middle|>" },
+}
+
 local defaults = {
-	endpoint = "http://localhost:1234/v1/chat/completions",
-	model = "zai-org/glm-4.7-flash",
+	endpoint = "http://localhost:1234/v1/completions",
+	model = "qwen/qwen3-coder-30b",
 	debounce_ms = 250,
-	max_context_before = 50,
-	max_context_after = 30,
 	max_tokens = 128,
 	temperature = 0.2,
 	accept_keymap = "<Tab>",
 	dismiss_keymap = "<S-Tab>",
 	exclude_filetypes = {},
+
+	-- Context: 0 = full buffer, positive number = max lines
+	max_context_lines = 0,
+
+	-- FIM tokens (default: Qwen family)
+	fim = {
+		prefix = "<|fim_prefix|>",
+		suffix = "<|fim_suffix|>",
+		middle = "<|fim_middle|>",
+	},
+
+	-- Stop sequences: nil = auto (uses fim.prefix as stop + <|endoftext|>)
+	stop = nil,
 }
 
 M.values = vim.deepcopy(defaults)

@@ -33,31 +33,32 @@ M.fetch_suggestion = function(context, callback)
 	local request_buf = vim.api.nvim_get_current_buf()
 	local request_cursor = vim.api.nvim_win_get_cursor(0)
 
-	local system_prompt = string.format(
-		"You are an expert %s developer. Provide code completion for the file '%s'. "
-			.. "Respond ONLY with the code that fits between the provided PREFIX and SUFFIX. "
-			.. "Do not repeat the prefix. No markdown. No explanations.",
-		context.filetype,
-		context.filename
+	-- Build FIM prompt
+	local fim = config.get("fim")
+	local prompt = string.format(
+		"%s%s%s%s%s",
+		fim.prefix,
+		context.prefix,
+		fim.suffix,
+		context.suffix,
+		fim.middle
 	)
 
-	local user_prompt = string.format("PREFIX:\n%s\n\nSUFFIX:\n%s", context.prefix, context.suffix)
+	-- Build stop sequences
+	local stop = config.get("stop")
+	if not stop then
+		stop = { fim.prefix, fim.suffix, fim.middle, "<|endoftext|>", "\n\n" }
+	end
 
 	local ok, err = pcall(function()
 		curl.post(config.get("endpoint"), {
 			headers = { ["Content-Type"] = "application/json" },
 			body = vim.fn.json_encode({
 				model = config.get("model"),
-				messages = {
-					{
-						role = "system",
-						content = system_prompt,
-					},
-					{ role = "user", content = user_prompt },
-				},
+				prompt = prompt,
 				temperature = config.get("temperature"),
 				max_tokens = config.get("max_tokens"),
-				stop = { "\n\n", "SUFFIX:", "PREFIX:" },
+				stop = stop,
 			}),
 			callback = function(res)
 				-- Discard if a newer request has been made since this one fired
@@ -95,11 +96,28 @@ M.fetch_suggestion = function(context, callback)
 				end
 
 				local choice = decoded.choices[1]
-				if not choice or not choice.message or not choice.message.content then
+				if not choice or not choice.text then
 					return
 				end
 
-				local result = choice.message.content
+				local result = choice.text
+
+				-- Strip leading newline if the completion starts with one
+				-- (common artifact from FIM models)
+				if result:sub(1, 1) == "\n" then
+					result = result:sub(2)
+				end
+
+				-- When completing mid-line (non-whitespace after cursor),
+				-- keep only the first line to avoid over-generation
+				if context.midline then
+					result = result:match("^([^\n]*)")
+				end
+
+				-- Discard empty completions
+				if result == "" then
+					return
+				end
 
 				vim.schedule(function()
 					-- Discard if request was cancelled while waiting for vim.schedule
@@ -110,7 +128,8 @@ M.fetch_suggestion = function(context, callback)
 					-- Stale response guard: discard if cursor moved since request was made
 					local current_buf = vim.api.nvim_get_current_buf()
 					local current_cursor = vim.api.nvim_win_get_cursor(0)
-					if current_buf ~= request_buf
+					if
+						current_buf ~= request_buf
 						or current_cursor[1] ~= request_cursor[1]
 						or current_cursor[2] ~= request_cursor[2]
 					then
