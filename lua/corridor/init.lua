@@ -34,6 +34,18 @@ M.setup = function(opts)
 		end
 	end, { desc = "Accept AI Suggestion" })
 
+	-- Map Shift-Tab to dismiss in Insert Mode
+	vim.keymap.set("i", config.get("dismiss_keymap"), function()
+		if ui.current_suggestion then
+			M.dismiss_suggestion()
+		else
+			-- Fallback to normal key behavior if no suggestion
+			local key = config.get("dismiss_keymap")
+			local termcodes = vim.api.nvim_replace_termcodes(key, true, true, true)
+			vim.api.nvim_feedkeys(termcodes, "n", false)
+		end
+	end, { desc = "Dismiss AI Suggestion" })
+
 	-- Auto-clear logic
 	vim.api.nvim_create_autocmd({ "CursorMoved", "InsertCharPre" }, {
 		callback = function()
@@ -85,6 +97,12 @@ M.get_ai_suggestion = function()
 	}
 
 	api.fetch_suggestion(context, ui.show)
+end
+
+M.dismiss_suggestion = function()
+	ui.clear()
+	api.cancel()
+	timer:stop()
 end
 
 M.accept_suggestion = function()
