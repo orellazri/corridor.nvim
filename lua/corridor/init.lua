@@ -44,6 +44,7 @@ end
 
 M.handle_typing = function()
 	ui.clear()
+	api.cancel()
 	timer:stop()
 	timer:start(
 		config.get("debounce_ms"),
