@@ -4,10 +4,19 @@ local config = require("corridor.config")
 
 local M = {}
 
-local timer = vim.loop.new_timer()
+local timer = nil
 
 M.setup = function(opts)
 	config.setup(opts)
+
+	-- Clean up any existing timer from a previous setup() call
+	if timer then
+		timer:stop()
+		if not timer:is_closing() then
+			timer:close()
+		end
+	end
+	timer = vim.uv.new_timer()
 
 	-- Create an Augroup to prevent duplicate listeners
 	local group = vim.api.nvim_create_augroup("CorridorAutoSuggest", { clear = true })
