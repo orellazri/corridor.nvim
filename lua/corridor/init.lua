@@ -75,6 +75,12 @@ M.setup = function(opts)
 end
 
 M.handle_typing = function()
+	-- Skip excluded filetypes
+	local excluded = config.get("exclude_filetypes")
+	if excluded[vim.bo.filetype] then
+		return
+	end
+
 	ui.clear()
 	api.cancel()
 	timer:stop()
@@ -98,11 +104,14 @@ M.get_ai_suggestion = function()
 	local filetype = vim.bo.filetype
 	local filename = vim.fn.expand("%:t")
 
-	local before_lines = vim.api.nvim_buf_get_lines(buf, math.max(0, row - 20), row, false)
+	local ctx_before = config.get("max_context_before")
+	local ctx_after = config.get("max_context_after")
+
+	local before_lines = vim.api.nvim_buf_get_lines(buf, math.max(0, row - ctx_before), row, false)
 	local current_line_before_cursor = vim.api.nvim_get_current_line():sub(1, col)
 	table.insert(before_lines, current_line_before_cursor)
 
-	local after_lines = vim.api.nvim_buf_get_lines(buf, row + 1, row + 11, false)
+	local after_lines = vim.api.nvim_buf_get_lines(buf, row + 1, row + 1 + ctx_after, false)
 	local current_line_after_cursor = vim.api.nvim_get_current_line():sub(col + 1)
 	table.insert(after_lines, 1, current_line_after_cursor)
 
