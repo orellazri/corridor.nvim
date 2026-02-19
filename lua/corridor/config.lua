@@ -5,11 +5,16 @@ M.fim_presets = {
 	codellama = { prefix = "<PRE>", suffix = "<SUF>", middle = "<MID>" },
 	deepseek = { prefix = "<｜fim▁begin｜>", suffix = "<｜fim▁hole｜>", middle = "<｜fim▁end｜>" },
 	qwen = { prefix = "<|fim_prefix|>", suffix = "<|fim_suffix|>", middle = "<|fim_middle|>" },
+	codestral = { prefix = "<|fim_prefix|>", suffix = "<|fim_suffix|>", middle = "<|fim_middle|>" },
 }
 
 local defaults = {
+	-- Provider: "lmstudio" (OpenAI-compatible /v1/completions) or "codestral" (Mistral FIM)
+	provider = "lmstudio",
+
 	endpoint = "http://localhost:1234/v1/completions",
 	model = "qwen/qwen3-coder-30b",
+	api_key = nil, -- API key string, or reads from CORRIDOR_API_KEY env var
 	debounce_ms = 250,
 	max_tokens = 128,
 	temperature = 0.2,

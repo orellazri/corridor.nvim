@@ -17,14 +17,29 @@ M.cancel = function()
 	current_request_id = current_request_id + 1
 end
 
---- Build a FIM prompt string from context.
+--- Build a FIM prompt string from context (lmstudio provider).
 M._build_prompt = function(context)
 	local fim = config.get("fim")
 	return fim.prefix .. context.prefix .. fim.suffix .. context.suffix .. fim.middle
 end
 
---- Build the request body for the completions API.
-M._build_request_body = function(prompt)
+--- Build the request body based on the configured provider.
+M._build_request_body = function(context)
+	local provider = config.get("provider")
+
+	if provider == "codestral" then
+		return vim.fn.json_encode({
+			model = config.get("model"),
+			prompt = context.prefix,
+			suffix = context.suffix,
+			temperature = config.get("temperature"),
+			max_tokens = config.get("max_tokens"),
+			stop = config.get("stop"),
+		})
+	end
+
+	-- lmstudio (default): OpenAI-compatible /v1/completions with FIM tokens
+	local prompt = M._build_prompt(context)
 	return vim.fn.json_encode({
 		model = config.get("model"),
 		prompt = prompt,
@@ -32,6 +47,25 @@ M._build_request_body = function(prompt)
 		max_tokens = config.get("max_tokens"),
 		stop = config.get("stop"),
 	})
+end
+
+--- Resolve the API key from config or environment variable.
+M._resolve_api_key = function()
+	local key = config.get("api_key")
+	if key then
+		return key
+	end
+	return os.getenv("CORRIDOR_API_KEY")
+end
+
+--- Build request headers based on the configured provider.
+M._build_headers = function()
+	local headers = { ["Content-Type"] = "application/json" }
+	local api_key = M._resolve_api_key()
+	if api_key then
+		headers["Authorization"] = "Bearer " .. api_key
+	end
+	return headers
 end
 
 --- Post-process a raw completion string.
@@ -56,6 +90,7 @@ M._process_completion = function(text, midline)
 end
 
 --- Extract the completion text from a decoded API response.
+--- Handles both lmstudio (choices[].text) and codestral (choices[].message.content) formats.
 --- Returns nil if the response is invalid or empty.
 M._extract_completion = function(decoded)
 	if not decoded.choices or #decoded.choices == 0 then
@@ -63,11 +98,21 @@ M._extract_completion = function(decoded)
 	end
 
 	local choice = decoded.choices[1]
-	if not choice or not choice.text then
+	if not choice then
 		return nil
 	end
 
-	return choice.text
+	-- Codestral returns message.content
+	if choice.message and choice.message.content then
+		return choice.message.content
+	end
+
+	-- lmstudio / OpenAI-compatible returns text
+	if choice.text then
+		return choice.text
+	end
+
+	return nil
 end
 
 M.fetch_suggestion = function(context, callback)
@@ -82,12 +127,12 @@ M.fetch_suggestion = function(context, callback)
 	local request_buf = vim.api.nvim_get_current_buf()
 	local request_cursor = vim.api.nvim_win_get_cursor(0)
 
-	local prompt = M._build_prompt(context)
-	local body = M._build_request_body(prompt)
+	local body = M._build_request_body(context)
+	local headers = M._build_headers()
 
 	local ok, err = pcall(function()
 		curl.post(config.get("endpoint"), {
-			headers = { ["Content-Type"] = "application/json" },
+			headers = headers,
 			body = body,
 			callback = function(res)
 				M._handle_response(res, my_request_id, request_buf, request_cursor, context.midline, callback)
