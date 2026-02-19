@@ -1,11 +1,14 @@
 local api = require("corridor.api")
 local ui = require("corridor.ui")
+local config = require("corridor.config")
 
 local M = {}
 
 local timer = vim.loop.new_timer()
 
-M.setup = function()
+M.setup = function(opts)
+	config.setup(opts)
+
 	-- Create an Augroup to prevent duplicate listeners
 	local group = vim.api.nvim_create_augroup("CorridorAutoSuggest", { clear = true })
 
@@ -18,14 +21,15 @@ M.setup = function()
 	})
 
 	-- Map Tab to accept in Insert Mode
-	vim.keymap.set("i", "<Tab>", function()
+	vim.keymap.set("i", config.get("accept_keymap"), function()
 		if ui.current_suggestion then
 			vim.schedule(function()
 				M.accept_suggestion()
 			end)
 		else
-			-- Fallback to normal Tab behavior if no suggestion
-			local termcodes = vim.api.nvim_replace_termcodes("<Tab>", true, true, true)
+			-- Fallback to normal key behavior if no suggestion
+			local key = config.get("accept_keymap")
+			local termcodes = vim.api.nvim_replace_termcodes(key, true, true, true)
 			vim.api.nvim_feedkeys(termcodes, "n", false)
 		end
 	end, { desc = "Accept AI Suggestion" })
@@ -42,7 +46,7 @@ M.handle_typing = function()
 	ui.clear()
 	timer:stop()
 	timer:start(
-		250,
+		config.get("debounce_ms"),
 		0,
 		vim.schedule_wrap(function()
 			local mode = vim.api.nvim_get_mode().mode

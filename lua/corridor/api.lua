@@ -1,3 +1,5 @@
+local config = require("corridor.config")
+
 local M = {}
 
 M.fetch_suggestion = function(context, callback)
@@ -13,10 +15,10 @@ M.fetch_suggestion = function(context, callback)
 
 	local user_prompt = string.format("PREFIX:\n%s\n\nSUFFIX:\n%s", context.prefix, context.suffix)
 
-	curl.post("http://localhost:1234/v1/chat/completions", {
+	curl.post(config.get("endpoint"), {
 		headers = { ["Content-Type"] = "application/json" },
 		body = vim.fn.json_encode({
-			model = "zai-org/glm-4.7-flash",
+			model = config.get("model"),
 			messages = {
 				{
 					role = "system",
@@ -24,8 +26,8 @@ M.fetch_suggestion = function(context, callback)
 				},
 				{ role = "user", content = user_prompt },
 			},
-			temperature = 0.2,
-			max_tokens = 128,
+			temperature = config.get("temperature"),
+			max_tokens = config.get("max_tokens"),
 			stop = { "\n\n", "SUFFIX:", "PREFIX:" },
 		}),
 		callback = function(res)
