@@ -3,14 +3,32 @@ local ui = require("corridor.ui")
 
 local M = {}
 
-M.setup = function()
-	-- Keymap to trigger AI
-	vim.keymap.set("n", "<leader>a", function()
-		M.get_ai_suggestion()
-	end, { desc = "Get AI Suggestion" })
+local timer = vim.loop.new_timer()
 
-	-- Keymap to accept the suggestion
-	vim.keymap.set("n", "<Tab>", M.accept_suggestion, { desc = "Accept AI Suggestion" })
+M.setup = function()
+	-- Create an Augroup to prevent duplicate listeners
+	local group = vim.api.nvim_create_augroup("CorridorAutoSuggest", { clear = true })
+
+	-- Trigger whenever text is changed in Insert Mode
+	vim.api.nvim_create_autocmd({ "TextChangedI", "InsertEnter" }, {
+		group = group,
+		callback = function()
+			M.handle_typing()
+		end,
+	})
+
+	-- Map Tab to accept in Insert Mode
+	vim.keymap.set("i", "<Tab>", function()
+		if ui.current_suggestion then
+			vim.schedule(function()
+				M.accept_suggestion()
+			end)
+		else
+			-- Fallback to normal Tab behavior if no suggestion
+			local termcodes = vim.api.nvim_replace_termcodes("<Tab>", true, true, true)
+			vim.api.nvim_feedkeys(termcodes, "n", false)
+		end
+	end, { desc = "Accept AI Suggestion" })
 
 	-- Auto-clear logic
 	vim.api.nvim_create_autocmd({ "CursorMoved", "InsertCharPre" }, {
@@ -20,6 +38,21 @@ M.setup = function()
 	})
 end
 
+M.handle_typing = function()
+	ui.clear()
+	timer:stop()
+	timer:start(
+		250,
+		0,
+		vim.schedule_wrap(function()
+			local mode = vim.api.nvim_get_mode().mode
+			if mode == "i" then
+				M.get_ai_suggestion()
+			end
+		end)
+	)
+end
+
 M.get_ai_suggestion = function()
 	local buf = vim.api.nvim_get_current_buf()
 	local cursor = vim.api.nvim_win_get_cursor(0)
@@ -27,6 +60,7 @@ M.get_ai_suggestion = function()
 
 	local filetype = vim.bo.filetype
 	local filename = vim.fn.expand("%:t")
+
 	local before_lines = vim.api.nvim_buf_get_lines(buf, math.max(0, row - 20), row, false)
 	local current_line_before_cursor = vim.api.nvim_get_current_line():sub(1, col)
 	table.insert(before_lines, current_line_before_cursor)
@@ -45,7 +79,6 @@ M.get_ai_suggestion = function()
 		suffix = suffix,
 	}
 
-	ui.show("Thinking...")
 	api.fetch_suggestion(context, ui.show)
 end
 
