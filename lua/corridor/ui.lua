@@ -1,5 +1,8 @@
 local M = {}
 local ns_id = vim.api.nvim_create_namespace("corridor_suggestions")
+local hl_group = "CorridorSuggestion"
+
+vim.api.nvim_set_hl(0, hl_group, { link = "Comment", default = true })
 
 M.current_suggestion = nil
 
@@ -16,7 +19,7 @@ M.show = function(text)
 
 	-- Build the extmark options
 	local extmark_opts = {
-		virt_text = { { lines[1], "Comment" } },
+		virt_text = { { lines[1], hl_group } },
 		virt_text_pos = "overlay",
 	}
 
@@ -24,7 +27,7 @@ M.show = function(text)
 	if #lines > 1 then
 		local virt_lines = {}
 		for i = 2, #lines do
-			table.insert(virt_lines, { { lines[i], "Comment" } })
+			table.insert(virt_lines, { { lines[i], hl_group } })
 		end
 		extmark_opts.virt_lines = virt_lines
 	end

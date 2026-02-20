@@ -14,6 +14,7 @@ CONTENTS                                                    *corridor-contents*
   6. Providers .......................................... |corridor-providers|
   7. FIM Presets ........................................ |corridor-fim-presets|
   8. Commands .......................................... |corridor-commands|
+  9. Highlights ...................................... |corridor-highlights|
 
 ==============================================================================
 1. INTRODUCTION                                                     *corridor*
@@ -274,6 +275,18 @@ Completions are enabled by default after `setup()` (see |corridor-config-enabled
 You can also call the functions directly from Lua: >lua
   require("corridor").enable()
   require("corridor").disable()
+<
+
+==============================================================================
+9. HIGHLIGHTS                                            *corridor-highlights*
+
+corridor.nvim defines the following highlight group:
+
+`CorridorSuggestion`                                    *hl-CorridorSuggestion*
+  Used for ghost text suggestions. Linked to `Comment` by default.
+  Set with `default = true`, so users can override it in their colorscheme
+  or config: >lua
+  vim.api.nvim_set_hl(0, "CorridorSuggestion", { fg = "#808080", italic = true })
 <
 
 ==============================================================================
