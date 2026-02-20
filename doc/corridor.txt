@@ -72,13 +72,17 @@ provider ~
 
   AI backend to use. Supported values: `"lmstudio"` (OpenAI-compatible
   `/v1/completions` endpoint) or `"codestral"` (Mistral FIM API).
+  The endpoint is automatically resolved from the provider.
 
                                                         *corridor-config-endpoint*
 endpoint ~
-  Type: `string`
-  Default: `"http://localhost:1234/v1/completions"`
+  Type: `string|nil`
+  Default: `nil` (auto-resolved from provider)
 
-  API endpoint URL.
+  API endpoint URL. When `nil`, the endpoint is determined by the provider:
+  - `"lmstudio"`: `http://localhost:1234/v1/completions`
+  - `"codestral"`: `https://codestral.mistral.ai/v1/fim/completions`
+  Set this explicitly to override the default for a provider.
 
                                                         *corridor-config-model*
 model ~
@@ -167,7 +171,7 @@ Full example with defaults: >lua
   require("corridor").setup({
     enabled = true,
     provider = "lmstudio",
-    endpoint = "http://localhost:1234/v1/completions",
+    endpoint = nil,  -- auto-resolved from provider
     model = "qwen/qwen3-coder-30b",
     api_key = nil,
     debounce_ms = 250,
@@ -210,7 +214,6 @@ LM Studio ~
 >lua
   require("corridor").setup({
     provider = "lmstudio",
-    endpoint = "http://localhost:1234/v1/completions",
     model = "qwen/qwen3-coder-30b",
   })
 <
@@ -221,9 +224,17 @@ Codestral ~
 >lua
   require("corridor").setup({
     provider = "codestral",
-    endpoint = "https://codestral.mistral.ai/v1/fim/completions",
     model = "codestral-latest",
     api_key = "your-api-key",
+  })
+<
+
+  To override the default endpoint for a provider (e.g., a custom host):
+>lua
+  require("corridor").setup({
+    provider = "lmstudio",
+    endpoint = "http://my-server:8080/v1/completions",
+    model = "qwen/qwen3-coder-30b",
   })
 <
 

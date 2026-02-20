@@ -8,13 +8,20 @@ M.fim_presets = {
 	codestral = { prefix = "<|fim_prefix|>", suffix = "<|fim_suffix|>", middle = "<|fim_middle|>" },
 }
 
+--- Default endpoint URLs for each provider.
+M.provider_endpoints = {
+	lmstudio = "http://localhost:1234/v1/completions",
+	codestral = "https://codestral.mistral.ai/v1/fim/completions",
+}
+
 local defaults = {
 	enabled = true,
 
 	-- Provider: "lmstudio" (OpenAI-compatible /v1/completions) or "codestral" (Mistral FIM)
 	provider = "lmstudio",
 
-	endpoint = "http://localhost:1234/v1/completions",
+	-- Endpoint is auto-resolved from provider; set explicitly to override
+	endpoint = nil,
 	model = "qwen/qwen3-coder-30b",
 	api_key = nil, -- API key string, or reads from CORRIDOR_API_KEY env var
 	debounce_ms = 250,
@@ -42,8 +49,28 @@ M.values = vim.deepcopy(defaults)
 
 M.setup = function(opts)
 	M.values = vim.tbl_deep_extend("force", vim.deepcopy(defaults), opts or {})
+	M._resolve_endpoint()
 	M._normalize_exclude_filetypes()
 	M._derive_stop_sequences()
+end
+
+--- Resolve the endpoint from the provider when not explicitly configured.
+M._resolve_endpoint = function()
+	if M.values.endpoint then
+		return
+	end
+
+	local provider = M.values.provider
+	local endpoint = M.provider_endpoints[provider]
+	if not endpoint then
+		vim.notify(
+			string.format("Corridor: Unknown provider %q, please set endpoint manually", provider),
+			vim.log.levels.ERROR
+		)
+		return
+	end
+
+	M.values.endpoint = endpoint
 end
 
 --- Normalize exclude_filetypes: accept a list {"md", "help"} or map {md = true}
