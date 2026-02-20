@@ -9,6 +9,8 @@ M.fim_presets = {
 }
 
 local defaults = {
+	enabled = true,
+
 	-- Provider: "lmstudio" (OpenAI-compatible /v1/completions) or "codestral" (Mistral FIM)
 	provider = "lmstudio",
 

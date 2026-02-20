@@ -10,6 +10,7 @@ local enabled = true
 
 M.setup = function(opts)
 	config.setup(opts)
+	enabled = config.get("enabled")
 
 	M._init_timer()
 	M._register_autocmds()
@@ -68,17 +69,21 @@ M._register_keymaps = function()
 		end
 	end
 
-	vim.keymap.set("i", config.get("accept_keymap"), with_suggestion_or_fallback(
+	vim.keymap.set(
+		"i",
 		config.get("accept_keymap"),
-		function()
+		with_suggestion_or_fallback(config.get("accept_keymap"), function()
 			vim.schedule(M.accept_suggestion)
-		end
-	), { desc = "Accept AI Suggestion" })
+		end),
+		{ desc = "Accept AI Suggestion" }
+	)
 
-	vim.keymap.set("i", config.get("dismiss_keymap"), with_suggestion_or_fallback(
+	vim.keymap.set(
+		"i",
 		config.get("dismiss_keymap"),
-		M.dismiss_suggestion
-	), { desc = "Dismiss AI Suggestion" })
+		with_suggestion_or_fallback(config.get("dismiss_keymap"), M.dismiss_suggestion),
+		{ desc = "Dismiss AI Suggestion" }
+	)
 end
 
 M.handle_typing = function()

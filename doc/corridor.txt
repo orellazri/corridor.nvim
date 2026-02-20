@@ -57,6 +57,14 @@ Using lazy.nvim (https://github.com/folke/lazy.nvim):
 Call `require("corridor").setup(opts)` with a table of options. All options
 are optional and have sensible defaults.
 
+                                                        *corridor-config-enabled*
+enabled ~
+  Type: `boolean`
+  Default: `true`
+
+  Whether completions are enabled on startup. When set to `false`, corridor
+  will not fetch or display suggestions until `:CorridorEnable` is called.
+
                                                         *corridor-config-provider*
 provider ~
   Type: `string`
@@ -157,6 +165,7 @@ stop ~
 
 Full example with defaults: >lua
   require("corridor").setup({
+    enabled = true,
     provider = "lmstudio",
     endpoint = "http://localhost:1234/v1/completions",
     model = "qwen/qwen3-coder-30b",
@@ -249,7 +258,7 @@ Usage example: >lua
   pending requests are cancelled. Completions remain disabled until
   `:CorridorEnable` is called.
 
-Completions are enabled by default after `setup()`.
+Completions are enabled by default after `setup()` (see |corridor-config-enabled|).
 
 You can also call the functions directly from Lua: >lua
   require("corridor").enable()

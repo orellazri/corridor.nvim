@@ -40,6 +40,9 @@ All options with their defaults:
 
 ```lua
 require("corridor").setup({
+  -- Enabled by default
+  enabled = true,
+
   -- AI provider: "lmstudio" or "codestral"
   provider = "lmstudio",
 
