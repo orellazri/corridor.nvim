@@ -5,25 +5,32 @@ local M = {}
 -- Monotonically increasing ID to track the latest request.
 -- Stale responses are silently discarded via request_id comparison
 -- (plenary's curl doesn't support clean cancellation).
+---@type number
 local current_request_id = 0
 
 -- Check for plenary once at load time
+---@type boolean, table
 local has_plenary, curl = pcall(require, "plenary.curl")
 if not has_plenary then
 	vim.notify("corridor.nvim requires plenary.nvim to be installed", vim.log.levels.ERROR)
 end
 
+--- Increment request ID to invalidate any in-flight request.
 M.cancel = function()
 	current_request_id = current_request_id + 1
 end
 
 --- Build a FIM prompt string from context (lmstudio provider).
+---@param context corridor.Context
+---@return string
 M._build_prompt = function(context)
 	local fim = config.get("fim")
 	return fim.prefix .. context.prefix .. fim.suffix .. context.suffix .. fim.middle
 end
 
 --- Build the request body based on the configured provider.
+---@param context corridor.Context
+---@return string JSON-encoded request body
 M._build_request_body = function(context)
 	local provider = config.get("provider")
 
@@ -50,6 +57,7 @@ M._build_request_body = function(context)
 end
 
 --- Resolve the API key from config or environment variable.
+---@return string|nil
 M._resolve_api_key = function()
 	local key = config.get("api_key")
 	if key then
@@ -59,6 +67,7 @@ M._resolve_api_key = function()
 end
 
 --- Build request headers based on the configured provider.
+---@return table<string, string>
 M._build_headers = function()
 	local headers = { ["Content-Type"] = "application/json" }
 	local api_key = M._resolve_api_key()
@@ -70,7 +79,9 @@ end
 
 --- Post-process a raw completion string.
 --- Strips leading newlines and truncates to single-line for mid-line completions.
---- Returns nil if the result is empty.
+---@param text string Raw completion text
+---@param midline boolean Whether the cursor is mid-line
+---@return string|nil Processed text, or nil if empty
 M._process_completion = function(text, midline)
 	-- Strip leading newline (common FIM artifact)
 	if text:sub(1, 1) == "\n" then
@@ -91,7 +102,8 @@ end
 
 --- Extract the completion text from a decoded API response.
 --- Handles both lmstudio (choices[].text) and codestral (choices[].message.content) formats.
---- Returns nil if the response is invalid or empty.
+---@param decoded table Decoded JSON response body
+---@return string|nil Completion text, or nil if invalid/empty
 M._extract_completion = function(decoded)
 	if not decoded.choices or #decoded.choices == 0 then
 		return nil
@@ -115,6 +127,9 @@ M._extract_completion = function(decoded)
 	return nil
 end
 
+--- Fetch a completion suggestion from the configured provider.
+---@param context corridor.Context Buffer context for FIM completion
+---@param callback fun(text: string) Called with the completion text on success
 M.fetch_suggestion = function(context, callback)
 	if not has_plenary then
 		return
@@ -147,6 +162,12 @@ end
 
 --- Handle the HTTP response from the completions API.
 --- Validates, extracts, post-processes, and delivers the result via callback.
+---@param res table|nil Plenary curl response
+---@param my_request_id number Request ID at time of dispatch
+---@param request_buf number Buffer handle at time of request
+---@param request_cursor number[] Cursor position [row, col] at time of request
+---@param midline boolean Whether the cursor was mid-line
+---@param callback fun(text: string) Success callback
 M._handle_response = function(res, my_request_id, request_buf, request_cursor, midline, callback)
 	if my_request_id ~= current_request_id then
 		return

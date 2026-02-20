@@ -1,5 +1,27 @@
+---@class corridor.FimTokens
+---@field prefix string FIM prefix token
+---@field suffix string FIM suffix token
+---@field middle string FIM middle token
+
+---@class corridor.Config
+---@field enabled boolean Whether completions are enabled on startup
+---@field provider string AI provider: "lmstudio" or "codestral"
+---@field endpoint string|nil API endpoint URL (auto-resolved from provider if nil)
+---@field model string Model name to request from the provider
+---@field api_key string|nil API key (falls back to CORRIDOR_API_KEY env var)
+---@field debounce_ms number Debounce delay in milliseconds
+---@field max_tokens number Maximum tokens in completion response
+---@field temperature number Sampling temperature
+---@field accept_keymap string Keymap to accept a suggestion
+---@field dismiss_keymap string Keymap to dismiss a suggestion
+---@field exclude_filetypes table<string, boolean> Filetypes to exclude from suggestions
+---@field max_context_lines number Context lines limit (0 = full buffer)
+---@field fim corridor.FimTokens FIM token configuration
+---@field stop string[]|nil Stop sequences (auto-derived if nil)
+
 local M = {}
 
+---@type table<string, corridor.FimTokens>
 M.fim_presets = {
 	starcoder = { prefix = "<fim_prefix>", suffix = "<fim_suffix>", middle = "<fim_middle>" },
 	codellama = { prefix = "<PRE>", suffix = "<SUF>", middle = "<MID>" },
@@ -9,11 +31,13 @@ M.fim_presets = {
 }
 
 --- Default endpoint URLs for each provider.
+---@type table<string, string>
 M.provider_endpoints = {
 	lmstudio = "http://localhost:1234/v1/completions",
 	codestral = "https://codestral.mistral.ai/v1/fim/completions",
 }
 
+---@type corridor.Config
 local defaults = {
 	enabled = true,
 
@@ -45,8 +69,11 @@ local defaults = {
 	stop = nil,
 }
 
+---@type corridor.Config
 M.values = vim.deepcopy(defaults)
 
+--- Initialize configuration by merging user options with defaults.
+---@param opts corridor.Config|nil User-provided configuration options
 M.setup = function(opts)
 	M.values = vim.tbl_deep_extend("force", vim.deepcopy(defaults), opts or {})
 	M._resolve_endpoint()
@@ -102,6 +129,9 @@ M._derive_stop_sequences = function()
 	M.values.stop = { fim.prefix, fim.suffix, fim.middle, "<|endoftext|>", "\n\n" }
 end
 
+--- Get a configuration value by key.
+---@param key string Configuration key name
+---@return any
 M.get = function(key)
 	return M.values[key]
 end

@@ -1,11 +1,19 @@
 local M = {}
+
+---@type number
 local ns_id = vim.api.nvim_create_namespace("corridor_suggestions")
+
+---@type string
 local hl_group = "CorridorSuggestion"
 
 vim.api.nvim_set_hl(0, hl_group, { link = "Comment", default = true })
 
+--- The currently displayed suggestion text, or nil if none is active.
+---@type string|nil
 M.current_suggestion = nil
 
+--- Display a suggestion as ghost text at the current cursor position.
+---@param text string The suggestion text to display
 M.show = function(text)
 	local buf = vim.api.nvim_get_current_buf()
 	local cursor = vim.api.nvim_win_get_cursor(0)
@@ -35,6 +43,7 @@ M.show = function(text)
 	vim.api.nvim_buf_set_extmark(buf, ns_id, line, col, extmark_opts)
 end
 
+--- Clear all ghost text extmarks and reset current suggestion state.
 M.clear = function()
 	local buf = vim.api.nvim_get_current_buf()
 	vim.api.nvim_buf_clear_namespace(buf, ns_id, 0, -1)

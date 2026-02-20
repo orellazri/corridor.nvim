@@ -5,9 +5,14 @@ local context = require("corridor.context")
 
 local M = {}
 
+---@type uv_timer_t|nil
 local timer = nil
+
+---@type boolean
 local enabled = true
 
+--- Set up corridor with the given options.
+---@param opts corridor.Config|nil User-provided configuration options
 M.setup = function(opts)
 	config.setup(opts)
 	enabled = config.get("enabled")
@@ -58,6 +63,11 @@ end
 
 --- Register accept/dismiss keymaps with fallback behavior.
 M._register_keymaps = function()
+	--- Create a callback that runs action if a suggestion is active,
+	--- otherwise falls through to the default key behavior.
+	---@param key string The keymap string
+	---@param action fun() Action to run when suggestion is active
+	---@return fun()
 	local function with_suggestion_or_fallback(key, action)
 		return function()
 			if ui.current_suggestion then
@@ -86,6 +96,7 @@ M._register_keymaps = function()
 	)
 end
 
+--- Handle typing events in insert mode: debounce and trigger suggestions.
 M.handle_typing = function()
 	if not enabled then
 		return
@@ -148,12 +159,14 @@ M._request_suggestion = function()
 	api.fetch_suggestion(ctx, ui.show)
 end
 
+--- Dismiss the current suggestion, cancel pending requests, and stop the timer.
 M.dismiss_suggestion = function()
 	ui.clear()
 	api.cancel()
 	timer:stop()
 end
 
+--- Accept the current suggestion by inserting its text at the cursor.
 M.accept_suggestion = function()
 	local text = ui.current_suggestion
 	if not text then
@@ -176,6 +189,8 @@ M.accept_suggestion = function()
 end
 
 --- Split a suggestion string into a list of lines suitable for buf_set_text.
+---@param text string The suggestion text
+---@return string[] Lines of the suggestion
 M._split_suggestion = function(text)
 	local lines = {}
 	for line in text:gmatch("([^\n]*)\n?") do

@@ -1,5 +1,6 @@
 local M = {}
 
+--- Run health checks for :checkhealth corridor.
 M.check = function()
 	vim.health.start("corridor.nvim")
 

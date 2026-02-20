@@ -1,9 +1,16 @@
 local config = require("corridor.config")
 
+---@class corridor.Context
+---@field filepath string Relative file path from cwd
+---@field filetype string Buffer filetype
+---@field prefix string Text before the cursor
+---@field suffix string Text after the cursor
+---@field midline boolean Whether the cursor is mid-line (non-whitespace after cursor)
+
 local M = {}
 
 --- Gather buffer context around the cursor for FIM completion.
---- Returns a table with prefix, suffix, midline flag, filepath, and filetype.
+---@return corridor.Context
 M.gather = function()
 	local buf = vim.api.nvim_get_current_buf()
 	local cursor = vim.api.nvim_win_get_cursor(0)
@@ -34,6 +41,12 @@ M.gather = function()
 end
 
 --- Build the prefix string (everything before the cursor within the context window).
+---@param buf number Buffer handle
+---@param row number 0-indexed cursor row
+---@param col number 0-indexed cursor column
+---@param current_line string Full text of the current line
+---@param max_lines number Maximum context lines (0 = unlimited)
+---@return string
 M._build_prefix = function(buf, row, col, current_line, max_lines)
 	local before_start
 	if max_lines == 0 then
@@ -50,6 +63,12 @@ M._build_prefix = function(buf, row, col, current_line, max_lines)
 end
 
 --- Build the suffix string (everything after the cursor within the context window).
+---@param buf number Buffer handle
+---@param row number 0-indexed cursor row
+---@param col number 0-indexed cursor column
+---@param current_line string Full text of the current line
+---@param max_lines number Maximum context lines (0 = unlimited)
+---@return string
 M._build_suffix = function(buf, row, col, current_line, max_lines)
 	local total_lines = vim.api.nvim_buf_line_count(buf)
 	local after_end
