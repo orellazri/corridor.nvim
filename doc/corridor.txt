@@ -14,7 +14,8 @@ CONTENTS                                                    *corridor-contents*
   6. Providers .......................................... |corridor-providers|
   7. FIM Presets ........................................ |corridor-fim-presets|
   8. Commands .......................................... |corridor-commands|
-  9. Highlights ...................................... |corridor-highlights|
+  9. Health Check .................................... |corridor-health|
+  10. Highlights ..................................... |corridor-highlights|
 
 ==============================================================================
 1. INTRODUCTION                                                     *corridor*
@@ -278,7 +279,20 @@ You can also call the functions directly from Lua: >lua
 <
 
 ==============================================================================
-9. HIGHLIGHTS                                            *corridor-highlights*
+9. HEALTH CHECK                                              *corridor-health*
+
+Run `:checkhealth corridor` to diagnose common issues. The health check
+verifies:
+
+- Neovim version >= 0.10
+- plenary.nvim is installed
+- Provider is valid and endpoint is configured
+- Model is configured
+- API key is available (required for codestral)
+- FIM tokens are complete
+
+==============================================================================
+10. HIGHLIGHTS                                           *corridor-highlights*
 
 corridor.nvim defines the following highlight group:
 
