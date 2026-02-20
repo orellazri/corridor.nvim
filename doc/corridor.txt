@@ -111,7 +111,7 @@ debounce_ms ~
                                                         *corridor-config-max_tokens*
 max_tokens ~
   Type: `number`
-  Default: `128`
+  Default: `64`
 
   Maximum number of tokens in the completion response.
 
@@ -177,7 +177,7 @@ Full example with defaults: >lua
     model = "qwen/qwen3-coder-30b",
     api_key = nil,
     debounce_ms = 250,
-    max_tokens = 128,
+    max_tokens = 64,
     temperature = 0.2,
     accept_keymap = "<Tab>",
     dismiss_keymap = "<S-Tab>",

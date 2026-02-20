@@ -62,7 +62,7 @@ require("corridor").setup({
   debounce_ms = 250,
 
   -- Max tokens in completion response
-  max_tokens = 128,
+  max_tokens = 64,
 
   -- Sampling temperature
   temperature = 0.2,
