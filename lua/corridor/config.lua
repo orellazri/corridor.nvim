@@ -56,7 +56,7 @@ local defaults = {
 	exclude_filetypes = {},
 
 	-- Context: 0 = full buffer, positive number = max lines
-	max_context_lines = 0,
+	max_context_lines = 128,
 
 	-- FIM tokens (default: Qwen family)
 	fim = {

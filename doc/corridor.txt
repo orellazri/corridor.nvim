@@ -147,7 +147,7 @@ exclude_filetypes ~
                                                         *corridor-config-max_context_lines*
 max_context_lines ~
   Type: `number`
-  Default: `0`
+  Default: `128`
 
   Number of lines of context to send. `0` sends the full buffer. A positive
   number limits context with an asymmetric 70/30 split (more lines before
@@ -182,7 +182,7 @@ Full example with defaults: >lua
     accept_keymap = "<Tab>",
     dismiss_keymap = "<S-Tab>",
     exclude_filetypes = {},
-    max_context_lines = 0,
+    max_context_lines = 128,
     fim = {
       prefix = "<|fim_prefix|>",
       suffix = "<|fim_suffix|>",

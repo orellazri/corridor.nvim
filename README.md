@@ -75,7 +75,7 @@ require("corridor").setup({
   exclude_filetypes = {},
 
   -- Context window: 0 = full buffer, N = limit to N lines
-  max_context_lines = 0,
+  max_context_lines = 128,
 
   -- FIM tokens (defaults to Qwen tokens)
   fim = {
