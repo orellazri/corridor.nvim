@@ -28,9 +28,7 @@ Using [lazy.nvim](https://github.com/folke/lazy.nvim):
 {
   "orellazri/corridor.nvim",
   dependencies = { "nvim-lua/plenary.nvim" },
-  config = function()
-    require("corridor").setup()
-  end,
+  opts = {},
 }
 ```
 
