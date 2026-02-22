@@ -1,4 +1,5 @@
 local config = require("corridor.config")
+local neighbors = require("corridor.neighbors")
 
 ---@class corridor.Context
 ---@field filepath string Relative file path from cwd
@@ -6,6 +7,7 @@ local config = require("corridor.config")
 ---@field prefix string Text before the cursor
 ---@field suffix string Text after the cursor
 ---@field midline boolean Whether the cursor is mid-line (non-whitespace after cursor)
+---@field neighbor_context string Formatted cross-file context from open buffers
 
 local M = {}
 
@@ -31,12 +33,16 @@ M.gather = function()
 	local after_cursor = current_line:sub(col + 1)
 	local midline = after_cursor ~= "" and after_cursor:match("%S") ~= nil
 
+	-- Gather cross-file context from other open buffers
+	local neighbor_context = neighbors.gather(buf)
+
 	return {
 		filepath = filepath,
 		filetype = vim.bo.filetype,
 		prefix = prefix,
 		suffix = suffix,
 		midline = midline,
+		neighbor_context = neighbor_context,
 	}
 end
 

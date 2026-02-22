@@ -16,6 +16,9 @@
 ---@field dismiss_keymap string Keymap to dismiss a suggestion
 ---@field exclude_filetypes table<string, boolean> Filetypes to exclude from suggestions
 ---@field max_context_lines number Context lines limit (0 = full buffer)
+---@field cross_file_context boolean Include snippets from other open buffers
+---@field max_cross_file_lines number Max lines to include per neighbor file
+---@field max_cross_file_count number Max number of neighbor files to include
 ---@field fim corridor.FimTokens FIM token configuration
 ---@field stop string[]|nil Stop sequences (auto-derived if nil)
 
@@ -57,6 +60,11 @@ local defaults = {
 
 	-- Context: 0 = full buffer, positive number = max lines
 	max_context_lines = 128,
+
+	-- Cross-file context: include snippets from other open buffers
+	cross_file_context = true,
+	max_cross_file_lines = 50,
+	max_cross_file_count = 3,
 
 	-- FIM tokens (default: Qwen family)
 	fim = {

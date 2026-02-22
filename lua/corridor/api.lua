@@ -21,11 +21,14 @@ M.cancel = function()
 end
 
 --- Build a FIM prompt string from context (lmstudio provider).
+--- Cross-file context is prepended before the FIM prefix token so all FIM models
+--- treat it as prior document context without breaking the FIM contract.
 ---@param context corridor.Context
 ---@return string
 M._build_prompt = function(context)
 	local fim = config.get("fim")
-	return fim.prefix .. context.prefix .. fim.suffix .. context.suffix .. fim.middle
+	local neighbor_ctx = context.neighbor_context or ""
+	return neighbor_ctx .. fim.prefix .. context.prefix .. fim.suffix .. context.suffix .. fim.middle
 end
 
 --- Build the request body based on the configured provider.
@@ -35,9 +38,10 @@ M._build_request_body = function(context)
 	local provider = config.get("provider")
 
 	if provider == "codestral" then
+		local neighbor_ctx = context.neighbor_context or ""
 		return vim.fn.json_encode({
 			model = config.get("model"),
-			prompt = context.prefix,
+			prompt = neighbor_ctx .. context.prefix,
 			suffix = context.suffix,
 			temperature = config.get("temperature"),
 			max_tokens = config.get("max_tokens"),

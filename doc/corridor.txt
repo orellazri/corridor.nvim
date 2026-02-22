@@ -31,6 +31,7 @@ Features:
 - FIM token presets for popular model families
 - Intelligent debouncing and stale request cancellation
 - Mid-line awareness for single-line truncation
+- Cross-file context from other open buffers for better suggestions
 - Configurable context window with asymmetric 70/30 split
 
 ==============================================================================
@@ -153,6 +154,32 @@ max_context_lines ~
   number limits context with an asymmetric 70/30 split (more lines before
   the cursor than after).
 
+                                                        *corridor-config-cross_file_context*
+cross_file_context ~
+  Type: `boolean`
+  Default: `true`
+
+  Include snippets from other open (listed) buffers in the prompt to give
+  the model awareness of related code. Neighbor files are ordered by recency
+  (most recently visited first) and prepended before the FIM prefix token.
+
+                                                        *corridor-config-max_cross_file_lines*
+max_cross_file_lines ~
+  Type: `number`
+  Default: `50`
+
+  Maximum number of lines to include per neighbor file. Lines are taken
+  from the top of the file, which typically contains imports, type
+  definitions, and module-level declarations.
+
+                                                        *corridor-config-max_cross_file_count*
+max_cross_file_count ~
+  Type: `number`
+  Default: `3`
+
+  Maximum number of neighbor files to include in the prompt. Files are
+  selected by recency (most recently visited buffer first).
+
                                                         *corridor-config-fim*
 fim ~
   Type: `table`
@@ -183,6 +210,9 @@ Full example with defaults: >lua
     dismiss_keymap = "<S-Tab>",
     exclude_filetypes = {},
     max_context_lines = 128,
+    cross_file_context = true,
+    max_cross_file_lines = 50,
+    max_cross_file_count = 3,
     fim = {
       prefix = "<|fim_prefix|>",
       suffix = "<|fim_suffix|>",

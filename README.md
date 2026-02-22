@@ -8,6 +8,7 @@ AI-powered inline code completion for Neovim. Shows ghost-text suggestions as yo
 
 - Ghost text suggestions rendered inline as you type
 - Fill-in-the-Middle (FIM) completions using both prefix and suffix context
+- Cross-file context from other open buffers for better suggestions
 - Multiple provider support: **LM Studio** (local, OpenAI-compatible) and **Codestral** (Mistral FIM API)
 - FIM token presets for StarCoder, CodeLlama, DeepSeek, Qwen, and Codestral model families
 - Intelligent debouncing and stale request cancellation
@@ -76,6 +77,11 @@ require("corridor").setup({
 
   -- Context window: 0 = full buffer, N = limit to N lines
   max_context_lines = 128,
+
+  -- Cross-file context: include snippets from other open buffers
+  cross_file_context = true,
+  max_cross_file_lines = 50,  -- max lines per neighbor file
+  max_cross_file_count = 3,   -- max number of neighbor files
 
   -- FIM tokens (defaults to Qwen tokens)
   fim = {
